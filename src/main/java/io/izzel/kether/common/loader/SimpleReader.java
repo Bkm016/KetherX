@@ -2,20 +2,19 @@ package io.izzel.kether.common.loader;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import io.izzel.kether.common.api.*;
 import io.izzel.kether.common.api.data.ContextString;
 import io.izzel.kether.common.api.data.SimpleQuest;
 import io.izzel.kether.common.loader.types.ArgTypes;
 import io.izzel.kether.common.util.LocalizedException;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.BiFunction;
 
 public class SimpleReader implements QuestReader {
 
+    private final List<String> namespace;
     private final QuestService<?> service;
     private final char[] arr;
     private int index = 0;
@@ -23,8 +22,14 @@ public class SimpleReader implements QuestReader {
     private int block = 0;
 
     public SimpleReader(QuestService<?> service, String text) {
+        this(service, text, new ArrayList<>());
+    }
+
+    public SimpleReader(QuestService<?> service, String text, List<String> namespace) {
         this.service = service;
         this.arr = text.toCharArray();
+        this.namespace = namespace;
+        this.namespace.add("ketherx");
     }
 
     @Override
@@ -111,12 +116,14 @@ public class SimpleReader implements QuestReader {
     public <T> QuestAction<T> nextAction() {
         skipBlank();
         String element = nextToken();
-        Optional<QuestActionParser> optional = service.getRegistry().getParser(element);
-        if (optional.isPresent()) {
-            return optional.get().resolve(this);
-        } else {
-            throw LocalizedException.of("unknown-action", element);
+        Optional<QuestActionParser> optional;
+        for (String name : namespace) {
+            optional = service.getRegistry().getParser(name, element);
+            if (optional.isPresent()) {
+                return optional.get().resolve(this);
+            }
         }
+        throw LocalizedException.of("unknown-action", element);
     }
 
     @Override

@@ -11,6 +11,7 @@ import io.izzel.kether.common.api.data.SimpleQuest;
 import io.izzel.kether.common.util.LocalizedException;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -22,7 +23,12 @@ public class SimpleQuestLoader implements QuestLoader {
     private static final Pattern BLOCK_LABEL = Pattern.compile("(def)? (?<name>\\w+):", Pattern.CASE_INSENSITIVE);
 
     @Override
-    public <CTX extends QuestContext> Quest load(QuestService<CTX> service, Logger logger, String id, byte[] bytes) throws LocalizedException {
+    public <C extends QuestContext> Quest load(QuestService<C> service, Logger logger, String id, byte[] bytes) throws LocalizedException {
+        return load(service, logger, id, bytes, new ArrayList<>());
+    }
+
+    @Override
+    public <CTX extends QuestContext> Quest load(QuestService<CTX> service, Logger logger, String id, byte[] bytes, List<String> namespace) throws LocalizedException {
         String content = new String(bytes, StandardCharsets.UTF_8);
         List<Map.Entry<String, String>> blockContents = Lists.newArrayList();
         {
