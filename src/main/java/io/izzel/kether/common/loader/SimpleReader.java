@@ -116,11 +116,21 @@ public class SimpleReader implements QuestReader {
     public <T> QuestAction<T> nextAction() {
         skipBlank();
         String element = nextToken();
-        Optional<QuestActionParser> optional;
-        for (String name : namespace) {
-            optional = service.getRegistry().getParser(name, element);
+        // 跨域访问
+        // trmenu@close、adyeshach@spawn、chemdah@quit
+        String[] domain = element.split("@");
+        if (domain.length == 2) {
+            Optional<QuestActionParser> optional = service.getRegistry().getParser(domain[0], domain[1]);
             if (optional.isPresent()) {
                 return optional.get().resolve(this);
+            }
+        } else {
+            Optional<QuestActionParser> optional;
+            for (String name : namespace) {
+                optional = service.getRegistry().getParser(name, element);
+                if (optional.isPresent()) {
+                    return optional.get().resolve(this);
+                }
             }
         }
         throw LocalizedException.of("unknown-action", element);
